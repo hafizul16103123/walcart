@@ -1,3 +1,3 @@
-interface userDTO{
+interface categoryDTO{
     name:string
 }

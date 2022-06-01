@@ -1,6 +1,7 @@
-import { User } from '../../models/users/entities/user.schema';
-export const createUser = (data:userDTO)=>{
-    User.create({
+import { Category } from "../../models/categories/entities/categories.schema"
+
+export const createCategory = (data:categoryDTO)=>{
+    Category.create({
         name:data.name
     })
 }

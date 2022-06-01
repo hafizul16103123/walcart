@@ -5,10 +5,14 @@ import os from 'os'
 import { config } from './config/general.config'
 import { dbConfig } from './config/db.config'
 import { initializeMongoose } from './services/db/db.service'
+import 
 const app = express()
 //connect to mongoose start
 initializeMongoose()
 
+
+//import routes 
+app.use('/programming-languages', categoryRouter);
 app.get('/test',(req,res)=>{
     const str:string ="PK";
     console.log(str)
