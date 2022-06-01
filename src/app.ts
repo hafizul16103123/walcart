@@ -1,8 +1,13 @@
 import express from 'express'
 import cluster from 'cluster'
+import mongoose from 'mongoose'
 import os from 'os'
 import { config } from './config/general.config'
+import { dbConfig } from './config/db.config'
+import { initializeMongoose } from './services/db/db.service'
 const app = express()
+//connect to mongoose start
+initializeMongoose()
 
 app.get('/test',(req,res)=>{
     const str:string ="PK";
@@ -11,7 +16,6 @@ app.get('/test',(req,res)=>{
 })
 
 //cluster setup
-const port = process.env.PORT
 const numCPUS = os.cpus().length
 if (cluster.isPrimary) {
 
