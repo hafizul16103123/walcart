@@ -6,6 +6,7 @@ const app = express()
 
 app.get('/test',(req,res)=>{
     const str:string ="PK";
+    console.log(str)
     res.send(str)
 })
 
