@@ -1,5 +1,9 @@
-import { NextFunction } from 'express'
-// import { createCategory } from '../../services/categories/categories.service'
+import { categoryDTO } from '../../models/categories/dtos/categories.dto'
+import { createCategory } from '../../services/categories/categories.service'
 export const get = (req: any, res: any, next: any)=> {
-    return 'ok'
+    const data:categoryDTO={
+        name:"Electronics"
+    }
+    const response = createCategory(data)
+    res.json(response);
 }

@@ -1,3 +1,3 @@
-interface categoryDTO{
+export interface categoryDTO{
     name:string
 }

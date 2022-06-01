@@ -1,23 +1,30 @@
 import express from 'express'
 import cluster from 'cluster'
-import mongoose from 'mongoose'
+import bodyParser from 'body-parser'
 import os from 'os'
 import { config } from './config/general.config'
-import { dbConfig } from './config/db.config'
 import { initializeMongoose } from './services/db/db.service'
-import 
+import CategoryRouter from './routes/categories/index.route'
 const app = express()
+
+//convert json string or from data to json
+app.use(bodyParser.json());
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+);
+
 //connect to mongoose start
 initializeMongoose()
 
-
 //import routes 
-app.use('/programming-languages', categoryRouter);
-app.get('/test',(req,res)=>{
+app.get('/',(req,res)=>{
     const str:string ="PK";
     console.log(str)
     res.send(str)
 })
+app.use('/c', CategoryRouter);
 
 //cluster setup
 const numCPUS = os.cpus().length

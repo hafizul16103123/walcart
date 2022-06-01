@@ -1,7 +1,9 @@
-import { Category } from "../../models/categories/entities/categories.schema"
+import { Category } from './../../models/categories/entities/categories.schema';
+import { categoryDTO } from "../../models/categories/dtos/categories.dto"
 
 export const createCategory = (data:categoryDTO)=>{
-    Category.create({
+   const res =  Category.create({
         name:data.name
     })
+    return res
 }
