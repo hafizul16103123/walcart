@@ -27,8 +27,8 @@ export const getSearchCategoryWithParents = async (req: any, res: any, next: any
     const response = await categoryService.getSearchCategoryWithParents(req.params.key, res)
     res.json(response);
 }
-export const getSingleCategory = async (req: any, res: any, next: any) => {
-    const response = await res.category
+export const getCategory = async (req: any, res: any, next: any) => {
+    const response = await categoryService.getCategory(req,res)
     res.json(response);
 }
 export const updateCategory = async (req: any, res: any, next: any) => {

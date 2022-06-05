@@ -40,7 +40,27 @@ export const createCategory = async (data: categoryDTO) => {
     return response
 
 }
-
+export const getCategory = async (req:express.Request,res:express.Response)=>{
+    const id = req.params.id
+    const category = await getSingleCategory(id)
+    if(category){
+        const response: IResult = {
+            success: true,
+            statusCode: 200,
+            queryResponse: category,
+            message: '',
+        };
+        return response
+    }else{
+        const response: IResult = {
+            success: false,
+            statusCode: 422,
+            queryResponse: null,
+            message: 'Invalid Category id',
+        };
+        return response
+    }
+}
 export const allCategories = async (res: any) => {
     const DEFAULT_EXPIRATION = config.defaultCashExpiration
     const resp = await findAll({ model: Category, obj: {}, projection: { name: 1, isRoot: 1, leaf: 1, active: 1 } })

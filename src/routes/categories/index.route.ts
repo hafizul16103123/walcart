@@ -9,7 +9,8 @@ router.get('/',middlewares.allCategoryCacheMiddleware,categoryController.getAllC
 router.get('/active',categoryController.getAllActiveCategories);
 router.get('/search/:key',categoryController.getSearchCategoryWithParents);
 router.get('/deactive/:id',categoryController.deactiveParentCategories);
-router.get('/:id',middlewares.getCategoryMiddleware,categoryController.getSingleCategory);
+// router.get('/:id',middlewares.getCategoryMiddleware,categoryController.getSingleCategory);
+router.get('/:id',categoryController.getCategory);
 router.put('/:id',categoryController.updateCategory);
 router.delete('/:id',categoryController.deleteCategory);
 
