@@ -1,4 +1,3 @@
-import { boolean } from '@hapi/joi'
 import mongoose from 'mongoose'
 
 const categorySchema = new mongoose.Schema({
