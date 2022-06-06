@@ -1,12 +1,14 @@
-import * as validator from './../../middlewares/validation.middleware';
+import * as validator from '../../middlewares/validation.middleware';
 import express from 'express'
-import { addNew, findAllAndUpdate, findOne, IResult } from './../db/dbQueries';
-import { Category } from './../../models/categories/entities/categories.schema';
+import { addNew, IResult } from '../db/dbQueries';
+import { Category } from '../../models/categories/entities/categories.schema';
 import { findAll } from '../db/dbQueries';
-import redisClient from '../../cache/redis.cache';
+import redisClient from '../../config/redis.config';
 import { categoryDTO } from '../../models/categories/dtos/categories.dto';
 import { config } from '../../config/general.config';
-
+import * as cacheService from '../cache/cache.service';
+import * as categoryHelper from './categories.helper.service';
+// Create category
 export const createCategory = async (data: categoryDTO) => {
 
     //validate
@@ -18,13 +20,13 @@ export const createCategory = async (data: categoryDTO) => {
     }
     if (!error) {
         const doc = await addNew({ model: Category, obj: finalData })
-       if(doc.queryResponse!==null){
-           // single category cache update
-           await updateSingleCategoryCache(doc.queryResponse.id, config.defaultCashExpiration);
-           // category list cache update
-           await updateCategoryListCache(config.defaultCashExpiration);
+        if (doc.queryResponse !== null) {
+            // single category cache update
+            await cacheService.updateSingleCategoryCache(doc.queryResponse);
+            // category list cache update
+            await cacheService.updateCategoryListCache();
         }
-           return doc;
+        return doc;
     }
 
     let errors = [];
@@ -40,10 +42,12 @@ export const createCategory = async (data: categoryDTO) => {
     return response
 
 }
-export const getCategory = async (req:express.Request,res:express.Response)=>{
+// Get single category
+export const getCategory = async (req: express.Request, res: express.Response) => {
     const id = req.params.id
-    const category = await getSingleCategory(id)
-    if(category){
+    const category = await categoryHelper.getSingleCategory(id)
+    console.log({category})
+    if (category) {
         const response: IResult = {
             success: true,
             statusCode: 200,
@@ -51,7 +55,7 @@ export const getCategory = async (req:express.Request,res:express.Response)=>{
             message: '',
         };
         return response
-    }else{
+    } else {
         const response: IResult = {
             success: false,
             statusCode: 422,
@@ -61,25 +65,28 @@ export const getCategory = async (req:express.Request,res:express.Response)=>{
         return response
     }
 }
-export const allCategories = async (res: any) => {
+// Get all categories
+export const allCategories = async (res:express.Response) => {
     const DEFAULT_EXPIRATION = config.defaultCashExpiration
     const resp = await findAll({ model: Category, obj: {}, projection: { name: 1, isRoot: 1, leaf: 1, active: 1 } })
     await redisClient.setEx('all_categories', DEFAULT_EXPIRATION, JSON.stringify(resp));
     res.send(resp);
 }
+// Get all active categories only
 export const getAllActiveCategories = async () => {
     const res = await findAll({ model: Category, obj: { active: true } })
     return res
 
 }
-export const getSearchCategoryWithParents = async (key: string, res: any) => {
-    //check in cache
-    const cacheDate = await redisClient.get(key)
-    if (cacheDate) return JSON.parse(cacheDate)
+// Search category with all nested sub categories
+export const searchCategory = async (key: string, res:express.Response) => {
+    // //check in cache
+    // const cacheDate = await redisClient.get(key)
+    // if (cacheDate) return JSON.parse(cacheDate)
 
     const DEFAULT_EXPIRATION = config.defaultCashExpiration
-    const category = await categorySearch(key)
-    const childCategory = await getChildCategories(category)
+    const category = await categoryHelper.categorySearch(key)
+    const childCategory = await categoryHelper.getChildCategories(category)
     let doc;
     if (childCategory) {
         doc = { category, childCategory }
@@ -102,31 +109,33 @@ export const getSearchCategoryWithParents = async (key: string, res: any) => {
     };
     return response
 }
-export const updateCategory = async (req: any, res: any) => {
+// Update Category
+export const updateCategory = async (req:express.Request, res:express.Response) => {
     const id = req.params.id
     const body = req.body
     const doc = await Category.updateOne({ _id: id }, body)
 
     //handle cache
-    const DEFAULT_EXPIRATION = config.defaultCashExpiration
     const cacheDeleted = await redisClient.del(id)
     if (cacheDeleted === 1) {
         // single category cache update
-        await updateSingleCategoryCache(id, DEFAULT_EXPIRATION);
+        const singleDoc = await categoryHelper.getSingleCategory(id);
+        await cacheService.updateSingleCategoryCache(singleDoc);
         // category list cache update
-        await updateCategoryListCache(DEFAULT_EXPIRATION);
+        await cacheService.updateCategoryListCache();
     }
     res.json(doc)
 }
+// Delete Category
 export const deleteCategory = async (req: express.Request) => {
-    const id  = req.params.id;
-    const doc = await Category.deleteOne({_id:id})
-    console.log({doc})
+    const id = req.params.id;
+    const doc = await Category.deleteOne({ _id: id })
+    console.log({ doc })
     if (doc) {
         // single category cache update
-        await deleteSingleCategoryFromCache(id, config.defaultCashExpiration);
+        await cacheService.deleteSingleCategoryFromCache(id);
         // category list cache update
-        await updateCategoryListCache(config.defaultCashExpiration);
+        await cacheService.updateCategoryListCache();
         const response: IResult = {
             success: true,
             statusCode: 200,
@@ -143,67 +152,15 @@ export const deleteCategory = async (req: express.Request) => {
     };
     return response
 }
-export const deactiveParentCategories = async (req: any,res:any) => {
-const id = req.params.id
-    const parentCategory = await getSingleCategory(id)
-    console.log({1:parentCategory})
-    const childCategory = await getChildCategories(parentCategory)
-    console.log({childCategory})
-    const categoryIds = childCategory?.map(e => e.id)
-    const updatedRecord = await findAllAndUpdate({ model: Category, obj: { _id: { $in: categoryIds } }, updateObject: { active: false } })
-    if(updatedRecord.queryResponse!==null){
-        for (const id of categoryIds) {
-            deleteSingleCategoryFromCache(id,config.defaultCashExpiration)
-            updateSingleCategoryCache(id,config.defaultCashExpiration)
-        }
-        updateCategoryListCache(config.defaultCashExpiration)
-    }
-    res.json(updatedRecord.queryResponse);
+// Deactive parent and child_category associated with that parent
+export const deactiveParentCategories = async (req:express.Request, res:express.Response) => {
+    const id = req.params.id
+    const action:boolean = false
+    await categoryHelper.activeOrDeactiveParentCategory(id, action, res);
 }
-
-async function getChildCategories(parentCategory: any) {
-    const categories: any[] = [];
-    let parentCategoryTemp = parentCategory;
-    console.log({ parentCategoryTemp })
-    while (parentCategoryTemp.leaf) {
-        if (parentCategoryTemp !== null) {
-            const doc = await getChildCategory(parentCategoryTemp.id);
-            parentCategoryTemp = doc;
-            categories.push(parentCategoryTemp)
-            
-        }
-
-    }
-    return categories;
+// Active parent and child_category associated with that parent
+export const activeParentCategories = async (req:express.Request, res:express.Response) => {
+    const id = req.params.id
+    const action:boolean = true
+    await categoryHelper.activeOrDeactiveParentCategory(id, action, res);
 }
-
-async function getChildCategory(id: string) {
-    const data = await findOne({ model: Category, obj: { parentId: id }, projection: { name: 1, isRoot: 1, leaf: 1, active: 1 } });
-    return data.queryResponse
-}
-async function getSingleCategory(id: string) {
-    const data = await findOne({ model: Category, obj: { _id: id }, projection: { name: 1, isRoot: 1, leaf: 1, active: 1 } });
-    return data.queryResponse
-}
-async function categorySearch(key: string) {
-    const doc = await findOne({ model: Category, obj: { name: { $regex: key } }, projection: { name: 1, isRoot: 1, leaf: 1, active: 1 } });
-    return doc.queryResponse;
-}
-
-
-//cache related operation
-async function updateSingleCategoryCache(id: any, DEFAULT_EXPIRATION: number) {
-    const singleDoc = await getSingleCategory(id);
-    await redisClient.setEx(id, DEFAULT_EXPIRATION, JSON.stringify(singleDoc));
-}
-async function deleteSingleCategoryFromCache(id: any, DEFAULT_EXPIRATION: number) {
-    // const singleDoc = await getSingleCategory(id);
-    const cacheDeleted = await redisClient.del(id)
- 
-}
-
-async function updateCategoryListCache(DEFAULT_EXPIRATION: number) {
-    const resp = await findAll({ model: Category, obj: {}, projection: { name: 1, isRoot: 1, leaf: 1, active: 1 } });
-    await redisClient.setEx('all_categories', DEFAULT_EXPIRATION, JSON.stringify(resp));
-}
-

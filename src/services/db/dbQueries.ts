@@ -6,17 +6,6 @@ export interface IResult {
     message: string|any;
 }
 
-// export interface IPaginationResult {
-//     success: boolean;
-//     queryResponse: any;
-//     responseCount: number;
-//     paginationData: {
-//         totalNumberOfResults: number;
-//         numberOfPages: number;
-//     };
-//     message: string |any;
-// }
-
 export const addNew = async (params: { model: any; obj: any }) => {
     const result: IResult = {
         success: false,
@@ -133,63 +122,3 @@ export const findAllAndUpdate = async (params: {
 
     return result;
 };
-
-// export const updateOne = async (params: {
-//     element: any;
-//     updateObject: any;
-// }) => {
-//     const result: IResult = {
-//         success: false,
-//         queryResponse: null,
-//         message: null,
-//     };
-
-//     await new Promise<void>((resolve) => {
-//         for (const key in params.updateObject) {
-//             params.element[key] = params.updateObject[key];
-//         }
-
-//         params.element
-//             .save()
-//             .then((res: any) => {
-//                 result.success = true;
-//                 result.queryResponse = res;
-
-//                 resolve();
-//             })
-//             .catch((err) => {
-//                 result.message = 'Something went wrong';
-//                 resolve();
-//             });
-//     });
-
-//     return result;
-// };
-
-// export const deleteOne = async (params: { element: any }) => {
-//     const result: IResult = {
-//         success: false,
-//         queryResponse: null,
-//         message: null,
-//     };
-
-//     await new Promise<void>((resolve) => {
-//         params.element
-//             .remove()
-//             .then((res: any) => {
-//                 result.success = true;
-//                 result.queryResponse = res;
-
-//                 resolve();
-//             })
-//             .catch((err) => {
-//                 result.message = 'Something went wrong';
-//                 resolve();
-//             });
-//     });
-
-//     return result;
-// };
-
-
-

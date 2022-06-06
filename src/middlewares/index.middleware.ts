@@ -1,11 +1,11 @@
 import express from 'express';
 import { NextFunction } from "express";
-import redisClient from '../cache/redis.cache';
+import redisClient from '../config/redis.config';
 import { config } from '../config/general.config';
 import { Category } from '../models/categories/entities/categories.schema';
 import { findOne } from '../services/db/dbQueries';
 
-export const responseFormatMiddleware = (req: any, res: any, next: any) => {
+export const responseFormatMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.log({ responseFormatMiddleware: res })
   next()
 }
@@ -35,7 +35,7 @@ export async function getCategoryMiddleware(req: express.Request, res: express.R
 
 export async function allCategoryCacheMiddleware(req: express.Request, res: express.Response | any, next: express.NextFunction) {
   const key = "all_categories"
-  const value = await redisClient.get('all_categories');
+  const value = await redisClient.get(key);
   if (value) {
     res.send(JSON.parse(value))
   } else {
@@ -51,12 +51,3 @@ async function cacheSingleCategory(id: string) {
     return null;
   }
 }
-// async function cacheSingleCategory(req:express.Request,res:express.Response|any,next:express.NextFunction) {
-//    const key =req.params.id
-//    const value = await redisClient.get(key);
-//    if (value) {
-//        res.send(JSON.parse(value))
-//    }else{
-//        next()
-//    }
-// }
