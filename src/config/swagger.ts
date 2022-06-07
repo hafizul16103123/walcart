@@ -1,3 +1,5 @@
+import { required } from "@hapi/joi"
+
 export const swaggerDocumentation = () => {
     return {
         openapi: "3.0.1",
@@ -38,7 +40,8 @@ export const swaggerDocumentation = () => {
                         name: {
                             type: 'string',
                             description: "Category name",
-                            example: "Electronics"
+                            example: "Electronics",
+                            required:true
                         },
                         slug: {
                             type: 'string',
@@ -48,22 +51,26 @@ export const swaggerDocumentation = () => {
                         isRoot: {
                             type: "boolean",
                             description: "Define Root category or not",
-                            example: true
+                            example: true,
+                            required:true
                         },
                         active: {
                             type: "boolean",
                             description: "Define Category is active or not",
-                            example: true
+                            example: true,
+                            required:true
                         },
                         leaf: {
                             type: "boolean",
                             description: "Define category has subcategory or not",
-                            example: true
+                            example: true,
+                            required:true
                         },
                         parentId: {
                             type: "number",
                             description: "Parent category id,which parent this category is belongs to",
-                            example: "629b834b67c6d1bfe27c5ba1"
+                            example: "629b834b67c6d1bfe27c5ba1",
+                            required:true
                         }
                     }
                 },
@@ -130,6 +137,27 @@ export const swaggerDocumentation = () => {
                     tags: ['Todo CRUD operations'],
                     description: "Get all Active categories",
                     operationId: 'getOnlyActiveTodos',
+                    parameters: [],
+                    responses: {
+                        '200': {
+                            description: "Todos were obtained",
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        $ref: '#/components/schemas/Category'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+
+            },
+            '/categories/deactive': {
+                get: {
+                    tags: ['Todo CRUD operations'],
+                    description: "Get all Active categories",
+                    operationId: 'getOnlyDeactiveTodos',
                     parameters: [],
                     responses: {
                         '200': {

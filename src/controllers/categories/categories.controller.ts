@@ -21,6 +21,10 @@ export const getAllActiveCategories = async (req: express.Request, res: express.
     const response = await categoryService.getAllActiveCategories()
     res.json(response);
 }
+export const getAllDeactiveCategories = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const response = await categoryService.getAllDeactiveCategories()
+    res.json(response);
+}
 export const searchCategory = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const response = await categoryService.searchCategory(req.params.key, res)
     res.json(response);
@@ -45,7 +49,4 @@ export const deactiveParentCategories = async (req: express.Request, res: expres
 export const activeParentCategories = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const response = await categoryService.activeParentCategories(req,res)
     res.json(response);
-}
-export const test = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-     res.sendStatus(200);
 }
